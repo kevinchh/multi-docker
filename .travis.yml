@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t chhokevin/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true chhokevin/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t chhokevin/multi-client ./client
+  - docker build -t chhokevin/multi-nginx ./nginx
+  - docker build -t chhokevin/multi-server ./server
+  - docker build -t chhokevin/multi-worker ./worker
+  #login to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  #take images and push them to dockerhub
+  - docker push chhokevin/multi-client
+  - docker push chhokevin/multi-nginx
+  - docker push chhokevin/multi-server
+  - docker push chhokevin/multi-worker
